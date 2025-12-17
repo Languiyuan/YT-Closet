@@ -1,5 +1,5 @@
 import { useStore } from '@/src/store-context';
-import { ThemedView } from '@/components/themed-view';
+import { ThemedSafeAreaView } from '@/components/themed-safe-area-view';
 import { ThemedText } from '@/components/themed-text';
 import { Colors } from '@/constants/theme';
 import { StyleSheet, View } from 'react-native';
@@ -17,7 +17,7 @@ export default function StatsScreen() {
   const topCategory = Object.entries(byCategory).sort((a, b) => b[1] - a[1])[0]?.[0] || '—';
 
   return (
-    <ThemedView style={styles.container}>
+    <ThemedSafeAreaView style={styles.container}>
       <ThemedText type="title">统计</ThemedText>
       {!roleId && <ThemedText>请先在“角色”标签选择当前角色</ThemedText>}
       {roleId && (
@@ -36,7 +36,7 @@ export default function StatsScreen() {
           </View>
         </View>
       )}
-    </ThemedView>
+    </ThemedSafeAreaView>
   );
 }
 

@@ -1,6 +1,6 @@
 import { useStore } from '@/src/store-context';
 import { Dictionary } from '@/src/types';
-import { ThemedView } from '@/components/themed-view';
+import { ThemedSafeAreaView } from '@/components/themed-safe-area-view';
 import { ThemedText } from '@/components/themed-text';
 import { Colors } from '@/constants/theme';
 import { FlatList, Pressable, StyleSheet, TextInput, View } from 'react-native';
@@ -36,7 +36,7 @@ export default function SettingsScreen() {
   };
 
   return (
-    <ThemedView style={styles.container}>
+    <ThemedSafeAreaView style={styles.container}>
       <ThemedText type="title">设置</ThemedText>
       {!roleId && <ThemedText>请先在“角色”标签选择当前角色</ThemedText>}
       {roleId && (
@@ -69,7 +69,7 @@ export default function SettingsScreen() {
           />
         </>
       )}
-    </ThemedView>
+    </ThemedSafeAreaView>
   );
 }
 

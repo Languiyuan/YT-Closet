@@ -1,6 +1,6 @@
 import { useStore } from '@/src/store-context';
 import { Outfit } from '@/src/types';
-import { ThemedView } from '@/components/themed-view';
+import { ThemedSafeAreaView } from '@/components/themed-safe-area-view';
 import { ThemedText } from '@/components/themed-text';
 import { Colors } from '@/constants/theme';
 import { FlatList, Image, Pressable, StyleSheet, TextInput, View } from 'react-native';
@@ -48,7 +48,7 @@ export default function OutfitsScreen() {
   const outfits = store.outfits.filter(o => o.roleId === roleId);
 
   return (
-    <ThemedView style={styles.container}>
+    <ThemedSafeAreaView style={styles.container}>
       <ThemedText type="title">搭配</ThemedText>
       {!roleId && <ThemedText>请先在“角色”标签选择当前角色</ThemedText>}
       {roleId && (
@@ -111,7 +111,7 @@ export default function OutfitsScreen() {
         )}
         ListEmptyComponent={<ThemedText>暂无搭配</ThemedText>}
       />
-    </ThemedView>
+    </ThemedSafeAreaView>
   );
 }
 

@@ -5,6 +5,7 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { StoreProvider } from '@/src/store-context';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -15,13 +16,15 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <StoreProvider>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-        </Stack>
-        <StatusBar style="auto" />
-      </StoreProvider>
+      <SafeAreaProvider>
+        <StoreProvider>
+          <Stack>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+          </Stack>
+          <StatusBar style="auto" />
+        </StoreProvider>
+      </SafeAreaProvider>
     </ThemeProvider>
   );
 }

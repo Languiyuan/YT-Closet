@@ -1,6 +1,6 @@
 import { useStore } from '@/src/store-context';
 import { Role } from '@/src/types';
-import { ThemedView } from '@/components/themed-view';
+import { ThemedSafeAreaView } from '@/components/themed-safe-area-view';
 import { ThemedText } from '@/components/themed-text';
 import { Colors } from '@/constants/theme';
 import { FlatList, Pressable, StyleSheet, TextInput, View } from 'react-native';
@@ -24,7 +24,7 @@ export default function RolesScreen() {
   };
 
   return (
-    <ThemedView style={styles.container}>
+    <ThemedSafeAreaView style={styles.container}>
       <ThemedText type="title">角色</ThemedText>
       <View style={styles.row}>
         <TextInput
@@ -55,7 +55,7 @@ export default function RolesScreen() {
         )}
         ListEmptyComponent={<ThemedText>暂无角色</ThemedText>}
       />
-    </ThemedView>
+    </ThemedSafeAreaView>
   );
 }
 

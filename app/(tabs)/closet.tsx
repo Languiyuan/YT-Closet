@@ -1,6 +1,6 @@
 import { useStore } from '@/src/store-context';
 import { Item } from '@/src/types';
-import { ThemedView } from '@/components/themed-view';
+import { ThemedSafeAreaView } from '@/components/themed-safe-area-view';
 import { ThemedText } from '@/components/themed-text';
 import { Colors } from '@/constants/theme';
 import { FlatList, Image, Pressable, StyleSheet, TextInput, View } from 'react-native';
@@ -57,7 +57,7 @@ export default function ClosetScreen() {
   const items = store.items.filter(i => i.roleId === roleId);
 
   return (
-    <ThemedView style={styles.container}>
+    <ThemedSafeAreaView style={styles.container}>
       <ThemedText type="title">衣橱</ThemedText>
       {!roleId && <ThemedText>请先在“角色”标签选择当前角色</ThemedText>}
       {roleId && (
@@ -106,7 +106,7 @@ export default function ClosetScreen() {
         )}
         ListEmptyComponent={<ThemedText>暂无衣物</ThemedText>}
       />
-    </ThemedView>
+    </ThemedSafeAreaView>
   );
 }
 
