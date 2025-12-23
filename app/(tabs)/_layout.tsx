@@ -11,11 +11,19 @@ export default function TabLayout() {
 
   return (
     <Tabs
+      initialRouteName="stats"
       screenOptions={{
         tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
         tabBarButton: HapticTab,
       }}>
+      <Tabs.Screen
+        name="stats"
+        options={{
+          title: '首页',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="chart.bar.fill" color={color} />,
+        }}
+      />
       <Tabs.Screen
         name="closet"
         options={{
@@ -30,27 +38,7 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.2.fill" color={color} />,
         }}
       />
-      <Tabs.Screen
-        name="stats"
-        options={{
-          title: '统计',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="chart.bar.fill" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="roles"
-        options={{
-          title: '角色',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.crop.square" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          title: '设置',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="gearshape.fill" color={color} />,
-        }}
-      />
+      <Tabs.Screen name="add-outfit" options={{ href: null, title: '添加搭配', headerBackTitle: '返回' }} />
     </Tabs>
   );
 }

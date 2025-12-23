@@ -10,6 +10,8 @@ export type Category = {
   id: string;
   roleId: string;
   name: string;
+  parentId?: string;
+  level?: 1 | 2;
   isSystem?: boolean;
   isHidden?: boolean;
 };
@@ -27,9 +29,16 @@ export type Item = {
   roleId: string;
   name?: string;
   imageUri?: string;
-  categoryId: string;
+  categoryL1Id: string;
+  categoryL2Id?: string;
   color?: string;
   brand?: string;
+  size?: string;
+  material?: string;
+  storageLocation?: string;
+  purchaseDate?: string;
+  usageFrequency?: '高' | '中' | '低' | '弃用';
+  palette?: '暖色' | '冷色' | '深色' | '浅色' | '中性';
   notes?: string;
   tagIds: string[];
   createdAt: number;
@@ -46,6 +55,7 @@ export type Outfit = {
   notes?: string;
   favorite?: boolean;
   retired?: boolean;
+  season?: string[];
   createdAt: number;
   updatedAt: number;
 };

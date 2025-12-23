@@ -20,6 +20,10 @@ export default function RootLayout() {
         <StoreProvider>
           <Stack>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="add-item" options={{ title: '添加单品', headerBackTitle: '返回' }} />
+            <Stack.Screen name="add-outfit" options={{ title: '添加搭配', headerBackTitle: '返回' }} />
+            <Stack.Screen name="edit-item/[id]" options={{ title: '编辑', headerBackTitle: '返回' }} />
+            <Stack.Screen name="edit-outfit/[id]" options={{ title: '编辑', headerBackTitle: '返回' }} />
             <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
           </Stack>
           <StatusBar style="auto" />

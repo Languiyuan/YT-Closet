@@ -5,37 +5,38 @@
 
 import { Platform } from 'react-native';
 
-const tintColorLight = '#D97B66';
-const tintColorDark = '#F6EFEA';
+// Premium Soft Purple
+const tintColorLight = '#00A878'; 
+const tintColorDark = '#A29BFE';
 
 export const Colors = {
   light: {
-    text: '#3E2E2C',
-    background: '#FFF8F1',
+    text: '#2D2D2D', // Softer black
+    background: '#FAFAFA', // Clean off-white
+    card: '#FFFFFF',
     tint: tintColorLight,
-    icon: '#6B4F4B',
-    tabIconDefault: '#6B4F4B',
+    icon: '#8E8E93',
+    tabIconDefault: '#C7C7CC',
     tabIconSelected: tintColorLight,
+    border: '#EFEFEF',
   },
   dark: {
-    text: '#F6EFEA',
-    background: '#2C1E1A',
+    text: '#E3D0C5',
+    background: '#1C1C1E',
+    card: '#2C2C2E',
     tint: tintColorDark,
-    icon: '#D8CFC8',
-    tabIconDefault: '#D8CFC8',
+    icon: '#8E8E93',
+    tabIconDefault: '#8E8E93',
     tabIconSelected: tintColorDark,
+    border: '#38383A',
   },
 };
 
 export const Fonts = Platform.select({
   ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
     sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
     serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
     rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
     mono: 'ui-monospace',
   },
   default: {
@@ -43,11 +44,5 @@ export const Fonts = Platform.select({
     serif: 'serif',
     rounded: 'normal',
     mono: 'monospace',
-  },
-  web: {
-    sans: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-    serif: "Georgia, 'Times New Roman', serif",
-    rounded: "'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif",
-    mono: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
   },
 });

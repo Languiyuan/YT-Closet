@@ -23,6 +23,15 @@ const MAPPING = {
   'chart.bar.fill': 'insert-chart',
   'person.crop.square': 'person',
   'gearshape.fill': 'settings',
+  'chevron.left': 'chevron-left',
+  'pencil': 'edit',
+  'checkmark': 'check',
+  'xmark.circle.fill': 'cancel',
+  'slider.horizontal.3': 'tune',
+  'chevron.down': 'expand-more',
+  'trash': 'delete',
+  'plus': 'add',
+  'tshirt': 'checkroom',
 } as IconMapping;
 
 /**

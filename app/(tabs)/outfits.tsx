@@ -3,156 +3,158 @@ import { Outfit } from '@/src/types';
 import { ThemedSafeAreaView } from '@/components/themed-safe-area-view';
 import { ThemedText } from '@/components/themed-text';
 import { Colors } from '@/constants/theme';
-import { FlatList, Image, Pressable, StyleSheet, TextInput, View } from 'react-native';
-import { useMemo, useState } from 'react';
+import { FlatList, Image, Pressable, StyleSheet, View, Dimensions, ScrollView } from 'react-native';
+import { useState, useEffect } from 'react';
+import { FAB } from '@/components/fab';
+import { AddSheet } from '@/components/add-sheet';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import { ImageViewer } from '@/components/image-viewer';
+import { IconSymbol } from '@/components/ui/icon-symbol';
 
-function uuid() {
-  return Math.random().toString(36).slice(2) + Date.now().toString(36);
-}
-
-function generatePreview(itemUris: string[]) {
-  return itemUris[0];
-}
+const { width } = Dimensions.get('window');
+const COLUMN_GAP = 12;
+const CARD_WIDTH = (width - 32 - COLUMN_GAP) / 2;
 
 export default function OutfitsScreen() {
-  const { store, saveOutfit, deleteOutfit } = useStore();
+  const { store } = useStore();
+  const router = useRouter();
+  const params = useLocalSearchParams<{ initialSeason?: string }>();
   const roleId = store.currentRoleId;
-  const items = store.items.filter(i => i.roleId === roleId);
-  const [title, setTitle] = useState('');
-  const [selected, setSelected] = useState<Record<string, boolean>>({});
+  const [addOpen, setAddOpen] = useState(false);
+  const [activeSeason, setActiveSeason] = useState<string | '全部'>('全部');
+  const [isViewerVisible, setIsViewerVisible] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  const toggle = (id: string) => {
-    setSelected(s => ({ ...s, [id]: !s[id] }));
-  };
+  // Handle initial filter param
+  useEffect(() => {
+    if (params.initialSeason) {
+      setActiveSeason(params.initialSeason);
+    }
+  }, [params.initialSeason]);
 
-  const addOutfit = async () => {
-    if (!roleId) return;
-    const ids = Object.keys(selected).filter(k => selected[k]);
-    const now = Date.now();
-    const uris = items.filter(i => ids.includes(i.id)).map(i => i.imageUri || '');
-    const previewUri = generatePreview(uris);
-    const outfit: Outfit = {
-      id: uuid(),
-      roleId,
-      title: title.trim() || undefined,
-      itemIds: ids,
-      previewUri,
-      createdAt: now,
-      updatedAt: now,
-    };
-    await saveOutfit(outfit);
-    setTitle('');
-    setSelected({});
-  };
+  const seasons = ['全部', '春', '夏', '秋', '冬', '四季通用'];
 
   const outfits = store.outfits.filter(o => o.roleId === roleId);
+  const filteredOutfits = activeSeason === '全部' 
+    ? outfits 
+    : outfits.filter(o => o.season?.includes(activeSeason));
+
+  const viewerImages = filteredOutfits.filter(o => o.previewUri).map(o => ({ uri: o.previewUri! }));
+
+  const openViewer = (outfit: Outfit) => {
+    if (!outfit.previewUri) return;
+    const index = viewerImages.findIndex(img => img.uri === outfit.previewUri);
+    if (index >= 0) {
+        setCurrentImageIndex(index);
+        setIsViewerVisible(true);
+    }
+  };
 
   return (
     <ThemedSafeAreaView style={styles.container}>
-      <ThemedText type="title">搭配</ThemedText>
       {!roleId && <ThemedText>请先在“角色”标签选择当前角色</ThemedText>}
       {roleId && (
-        <>
-          <View style={styles.row}>
-            <TextInput
-              placeholder="标题"
-              value={title}
-              onChangeText={setTitle}
-              style={styles.input}
-            />
-            <Pressable style={styles.button} onPress={addOutfit}>
-              <ThemedText style={styles.buttonText}>保存</ThemedText>
-            </Pressable>
-          </View>
-          <ThemedText type="subtitle">选择衣物</ThemedText>
-          <FlatList
-            data={items}
-            keyExtractor={i => i.id}
-            numColumns={3}
-            columnWrapperStyle={{ gap: 8 }}
-            contentContainerStyle={{ gap: 8 }}
-            renderItem={({ item }) => (
-              <Pressable onPress={() => toggle(item.id)} style={styles.pickCard}>
-                {item.imageUri ? (
-                  <Image source={{ uri: item.imageUri }} style={styles.pickThumb} />
-                ) : (
-                  <View style={[styles.pickThumb, styles.placeholder]} />
-                )}
-                <View
-                  style={[
-                    styles.pickOverlay,
-                    selected[item.id] && { backgroundColor: 'rgba(217,123,102,0.35)' },
-                  ]}
-                />
+        <View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabsContainer}>
+            {seasons.map(s => (
+              <Pressable
+                key={s}
+                style={[styles.tab, activeSeason === s && styles.tabActive]}
+                onPress={() => setActiveSeason(s)}>
+                <ThemedText style={activeSeason === s ? styles.tabTextActive : styles.tabText}>{s}</ThemedText>
               </Pressable>
-            )}
-          />
-        </>
+            ))}
+          </ScrollView>
+        </View>
       )}
-      <ThemedText type="subtitle">已保存</ThemedText>
+
       <FlatList
-        data={outfits}
+        data={filteredOutfits}
         keyExtractor={o => o.id}
-        contentContainerStyle={{ gap: 12 }}
+        numColumns={2}
+        columnWrapperStyle={{ gap: COLUMN_GAP }}
+        contentContainerStyle={{ gap: 12, paddingBottom: 80, flexGrow: 1 }}
         renderItem={({ item }) => (
-          <View style={styles.card}>
+          <View style={[styles.card, { width: CARD_WIDTH }]}>
             {item.previewUri ? (
-              <Image source={{ uri: item.previewUri }} style={styles.thumb} />
+              <Pressable onPress={() => openViewer(item)} onLongPress={() => router.push({ pathname: '/edit-outfit/[id]', params: { id: item.id } })}>
+                <Image source={{ uri: item.previewUri }} style={styles.thumb} />
+              </Pressable>
             ) : (
               <View style={[styles.thumb, styles.placeholder]} />
             )}
-            <View style={styles.cardRow}>
-              <ThemedText type="defaultSemiBold">{item.title || '搭配'}</ThemedText>
-              <Pressable onPress={() => deleteOutfit(item.id)}>
-                <ThemedText style={styles.deleteText}>删除</ThemedText>
-              </Pressable>
-            </View>
           </View>
         )}
-        ListEmptyComponent={<ThemedText>暂无搭配</ThemedText>}
+        ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+                <IconSymbol name="person.2.fill" size={48} color="#E0E0E0" />
+                <ThemedText style={styles.emptyText}>暂无搭配</ThemedText>
+            </View>
+        }
+      />
+
+      {/* Image Viewer */}
+      <ImageViewer
+        imageUri={viewerImages[currentImageIndex]?.uri}
+        visible={isViewerVisible}
+        onClose={() => setIsViewerVisible(false)}
+      />
+
+      <FAB onPress={() => setAddOpen(true)} />
+      <AddSheet
+        visible={addOpen}
+        onClose={() => setAddOpen(false)}
+        onPicked={(type, uri) => {
+          if (type === 'item') {
+            router.push({ pathname: '/add-item', params: { imageUri: uri } });
+          } else {
+            router.push({ pathname: '/add-outfit', params: { imageUri: uri } });
+          }
+        }}
       />
     </ThemedSafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, gap: 12 },
-  row: { flexDirection: 'row', gap: 8, alignItems: 'center' },
-  input: {
-    flex: 1,
-    backgroundColor: Colors.light.background,
-    borderColor: '#F2C078',
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+  container: { flex: 1, padding: 16, gap: 12, backgroundColor: Colors.light.background },
+  tabsContainer: { flexDirection: 'row', gap: 8, paddingRight: 16, paddingVertical: 8 },
+  tab: { 
+      backgroundColor: '#FFF', 
+      borderRadius: 20, 
+      paddingHorizontal: 16, 
+      paddingVertical: 8,
+      borderWidth: 1,
+      borderColor: '#EEE',
   },
-  button: {
-    backgroundColor: Colors.light.tint,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 12,
-  },
-  buttonText: { color: '#FFF' },
-  pickCard: { position: 'relative', flex: 1 },
-  pickThumb: { width: '100%', aspectRatio: 1, borderRadius: 8 },
-  pickOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderRadius: 8,
-    backgroundColor: 'transparent',
-  },
-  placeholder: { backgroundColor: '#F2C078' },
+  tabActive: { backgroundColor: Colors.light.tint, borderColor: Colors.light.tint },
+  tabText: { color: '#666', fontSize: 14 },
+  tabTextActive: { color: '#FFF', fontWeight: '600', fontSize: 14 },
   card: {
-    gap: 6,
-    backgroundColor: '#FFF3E6',
-    borderRadius: 12,
-    padding: 10,
+    backgroundColor: '#FFF',
+    borderRadius: 16,
+    padding: 0, 
+    overflow: 'hidden',
+    position: 'relative',
+    aspectRatio: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  thumb: { width: '100%', aspectRatio: 2, borderRadius: 8 },
-  cardRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  deleteText: { color: '#D9534F' },
+  thumb: { width: '100%', height: '100%' },
+  placeholder: { backgroundColor: '#F0F0F0' },
+  emptyContainer: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingTop: 100,
+      opacity: 0.5,
+  },
+  emptyText: {
+      marginTop: 16,
+      fontSize: 16,
+      color: '#999',
+  }
 });
