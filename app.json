@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "ClosetApp",
+    "name": "YT Closet",
     "slug": "ClosetApp",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/closetIcon.png",
     "scheme": "closetapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -14,12 +14,13 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "foregroundImage": "./assets/images/closetIcon.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.languiyuan.ClosetApp"
     },
     "web": {
       "output": "static",
@@ -43,6 +44,18 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "4f097b35-dcf8-49f7-8b8a-11fc33f39b32"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/4f097b35-dcf8-49f7-8b8a-11fc33f39b32"
     }
   }
 }

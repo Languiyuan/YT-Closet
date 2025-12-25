@@ -69,6 +69,8 @@ export default function StatsScreen() {
   const [newRoleName, setNewRoleName] = useState('');
   const [addOpen, setAddOpen] = useState(false);
   const [sloganIndex, setSloganIndex] = useState(0);
+  const [editingRoleId, setEditingRoleId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState('');
 
   const navigateToCloset = (categoryId: string) => {
       router.push({ pathname: '/(tabs)/closet', params: { initialCategory: categoryId } });
@@ -218,15 +220,61 @@ export default function StatsScreen() {
             <ScrollView style={{ maxHeight: 300 }}>
                 {store.roles.map(r => (
                 <View key={r.id} style={styles.roleRow}>
-                    <Pressable onPress={() => { setRole(r.id); setSheetOpen(false); }} style={styles.roleRowLeft}>
-                        <View style={[styles.roleDot, store.currentRoleId === r.id && styles.roleDotActive]} />
-                        <ThemedText style={[styles.roleName, store.currentRoleId === r.id && styles.roleNameActive]}>
+                    {editingRoleId === r.id ? (
+                      <>
+                        <View style={styles.roleRowLeft}>
+                          <View style={[styles.roleDot, store.currentRoleId === r.id && styles.roleDotActive]} />
+                          <TextInput
+                            value={editingName}
+                            onChangeText={text => setEditingName(text)}
+                            placeholder="用户名"
+                            maxLength={4}
+                            style={styles.inputInline}
+                            placeholderTextColor="#999"
+                          />
+                        </View>
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                          <Pressable
+                            style={styles.actionIcon}
+                            onPress={async () => {
+                              const name = editingName.trim();
+                              if (!name || name.length > 4) {
+                                Alert.alert('名称不合法', '用户名需为1-4个字');
+                                return;
+                              }
+                              const now = Date.now();
+                              const orig = store.roles.find(x => x.id === r.id)!;
+                              await saveRole({ ...orig, name, updatedAt: now });
+                              setEditingRoleId(null);
+                              setEditingName('');
+                            }}>
+                            <IconSymbol name="checkmark" size={18} color={Colors.light.tint} />
+                          </Pressable>
+                          <Pressable
+                            style={styles.actionIcon}
+                            onPress={() => { setEditingRoleId(null); setEditingName(''); }}>
+                            <IconSymbol name="xmark.circle.fill" size={18} color="#C7C7CC" />
+                          </Pressable>
+                        </View>
+                      </>
+                    ) : (
+                      <>
+                        <Pressable onPress={() => { setRole(r.id); setSheetOpen(false); }} style={styles.roleRowLeft}>
+                          <View style={[styles.roleDot, store.currentRoleId === r.id && styles.roleDotActive]} />
+                          <ThemedText style={[styles.roleName, store.currentRoleId === r.id && styles.roleNameActive]}>
                             {r.name}
-                        </ThemedText>
-                    </Pressable>
-                    <Pressable style={styles.deleteIcon} onPress={() => handleDeleteRole(r.id)}>
-                        <IconSymbol name="trash" size={18} color="#C7C7CC" />
-                    </Pressable>
+                          </ThemedText>
+                        </Pressable>
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                          <Pressable style={styles.actionIcon} onPress={() => { setEditingRoleId(r.id); setEditingName(r.name); }}>
+                            <IconSymbol name="pencil" size={18} color={Colors.light.tint} />
+                          </Pressable>
+                          <Pressable style={styles.actionIcon} onPress={() => handleDeleteRole(r.id)}>
+                            <IconSymbol name="trash" size={18} color="#C7C7CC" />
+                          </Pressable>
+                        </View>
+                      </>
+                    )}
                 </View>
                 ))}
             </ScrollView>
@@ -363,7 +411,7 @@ const styles = StyleSheet.create({
   roleDotActive: { backgroundColor: Colors.light.tint },
   roleName: { fontSize: 16, color: '#666' },
   roleNameActive: { color: '#333', fontWeight: '600' },
-  deleteIcon: { padding: 8 },
+  actionIcon: { padding: 8 },
   divider: { height: 1, backgroundColor: '#F0F0F0', marginVertical: 16 },
   addRoleContainer: { flexDirection: 'row', gap: 12 },
   input: { backgroundColor: '#FFF', borderWidth: 1, borderColor: '#EEE', borderRadius: 12, padding: 16, fontSize: 16, marginBottom: 16 },
@@ -371,5 +419,6 @@ const styles = StyleSheet.create({
   addButtonSmall: { width: 48, height: 48, backgroundColor: Colors.light.tint, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   primaryButton: { backgroundColor: Colors.light.tint, paddingVertical: 16, borderRadius: 12, alignItems: 'center' },
   primaryButtonText: { color: '#FFF', fontSize: 16, fontWeight: '600' },
+  inputInline: { flex: 1, backgroundColor: '#F9F9F9', borderRadius: 8, paddingHorizontal: 12, height: 40, fontSize: 15 },
 });
 
