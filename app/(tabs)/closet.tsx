@@ -3,7 +3,7 @@ import { Item } from '@/src/types';
 import { ThemedSafeAreaView } from '@/components/themed-safe-area-view';
 import { ThemedText } from '@/components/themed-text';
 import { Colors } from '@/constants/theme';
-import { FlatList, Image, Pressable, StyleSheet, View, ScrollView, Dimensions } from 'react-native';
+import { FlatList, Image, Pressable, StyleSheet, View, ScrollView, Dimensions, Alert } from 'react-native';
 import { useState, useMemo, useEffect } from 'react';
 import { Modal } from 'react-native';
 import { FAB } from '@/components/fab';
@@ -11,13 +11,14 @@ import { AddSheet } from '@/components/add-sheet';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { ImageViewer } from '@/components/image-viewer';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { saveImagesFromUris } from '@/src/storage';
 
 const { width } = Dimensions.get('window');
 const COLUMN_GAP = 12;
 const CARD_WIDTH = (width - 32 - COLUMN_GAP) / 2; // 32 is horizontal padding (16*2)
 
 export default function ClosetScreen() {
-  const { store } = useStore();
+  const { store, saveItem, saveOutfit } = useStore();
   const roleId = store.currentRoleId;
   const router = useRouter();
   const params = useLocalSearchParams<{ initialCategory?: string }>();

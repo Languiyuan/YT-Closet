@@ -38,7 +38,6 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.2.fill" color={color} />,
         }}
       />
-      <Tabs.Screen name="add-outfit" options={{ href: null, title: '添加搭配', headerBackTitle: '返回' }} />
     </Tabs>
   );
 }

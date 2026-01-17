@@ -3,20 +3,21 @@ import { Outfit } from '@/src/types';
 import { ThemedSafeAreaView } from '@/components/themed-safe-area-view';
 import { ThemedText } from '@/components/themed-text';
 import { Colors } from '@/constants/theme';
-import { FlatList, Image, Pressable, StyleSheet, View, Dimensions, ScrollView } from 'react-native';
+import { FlatList, Image, Pressable, StyleSheet, View, Dimensions, ScrollView, Alert } from 'react-native';
 import { useState, useEffect } from 'react';
 import { FAB } from '@/components/fab';
 import { AddSheet } from '@/components/add-sheet';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { ImageViewer } from '@/components/image-viewer';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { saveImagesFromUris } from '@/src/storage';
 
 const { width } = Dimensions.get('window');
 const COLUMN_GAP = 12;
 const CARD_WIDTH = (width - 32 - COLUMN_GAP) / 2;
 
 export default function OutfitsScreen() {
-  const { store } = useStore();
+  const { store, saveOutfit } = useStore();
   const router = useRouter();
   const params = useLocalSearchParams<{ initialSeason?: string }>();
   const roleId = store.currentRoleId;

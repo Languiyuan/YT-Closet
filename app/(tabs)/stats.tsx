@@ -9,6 +9,7 @@ import { AddSheet } from '@/components/add-sheet';
 import { useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { SEASONS } from '@/src/constants';
+import { saveImagesFromUris } from '@/src/storage';
 
 function uid() {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
@@ -98,6 +99,34 @@ export default function StatsScreen() {
             }
         }
     ]);
+  };
+
+  const handleBatchPicked = async (type: 'item' | 'outfit', uris: string[]) => {
+    if (!roleId) {
+      Alert.alert('请先选择角色');
+      return;
+    }
+    try {
+      const savedUris = await saveImagesFromUris(uris);
+      const now = Date.now();
+      if (type === 'item') {
+        for (const su of savedUris) {
+          const item = { id: uid(), roleId, imageUri: su, createdAt: now, updatedAt: now };
+          await saveItem(item as any);
+        }
+        Alert.alert('已添加', `成功添加 ${savedUris.length} 个单品`);
+        router.push('/(tabs)/closet');
+      } else {
+        for (const su of savedUris) {
+          const outfit = { id: uid(), roleId, previewUri: su, itemIds: [], createdAt: now, updatedAt: now };
+          await saveOutfit(outfit as any);
+        }
+        Alert.alert('已添加', `成功添加 ${savedUris.length} 个搭配`);
+        router.push('/(tabs)/outfits');
+      }
+    } catch (e) {
+      Alert.alert('保存失败', '请重试');
+    }
   };
 
   return (
@@ -214,7 +243,8 @@ export default function StatsScreen() {
 
       {/* Role Switcher Modal - Refined */}
       <Modal visible={sheetOpen} transparent animationType="fade" onRequestClose={() => setSheetOpen(false)}>
-        <Pressable style={styles.modalOverlay} onPress={() => setSheetOpen(false)}>
+        <View style={styles.modalOverlay}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setSheetOpen(false)} />
           <View style={styles.modalContent}>
             <ThemedText type="subtitle" style={{ marginBottom: 20, textAlign: 'center' }}>切换角色</ThemedText>
             <ScrollView style={{ maxHeight: 300 }}>
@@ -304,7 +334,7 @@ export default function StatsScreen() {
               </Pressable>
             </View>
           </View>
-        </Pressable>
+        </View>
       </Modal>
 
       <FAB onPress={() => setAddOpen(true)} />

@@ -142,6 +142,15 @@ export async function saveImageFromUri(sourceUri: string) {
   return dest;
 }
 
+export async function saveImagesFromUris(sourceUris: string[]) {
+  const results: string[] = [];
+  for (const uri of sourceUris) {
+    const saved = await saveImageFromUri(uri);
+    results.push(saved);
+  }
+  return results;
+}
+
 function uid() {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
 }

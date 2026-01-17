@@ -4,18 +4,22 @@ import { ThemedText } from '@/components/themed-text';
 import { Colors } from '@/constants/theme';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useState, useEffect } from 'react';
+ 
 
 export function AddSheet({
   visible,
   onClose,
   onPicked,
+  
 }: {
   visible: boolean;
   onClose: () => void;
   onPicked: (type: 'item' | 'outfit', uri: string) => void;
+  
 }) {
   const [step, setStep] = useState<'type' | 'source'>('type');
   const [selectedType, setSelectedType] = useState<'item' | 'outfit'>('item');
+  
 
   // Reset step when modal opens
   useEffect(() => {
@@ -26,7 +30,10 @@ export function AddSheet({
 
   const chooseLibrary = async () => {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) return;
+    if (!perm.granted) {
+      alert('需要相册权限以选择图片');
+      return;
+    }
     const res = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       quality: 0.8,
@@ -38,7 +45,10 @@ export function AddSheet({
   };
   const takePhoto = async () => {
     const perm = await ImagePicker.requestCameraPermissionsAsync();
-    if (!perm.granted) return;
+    if (!perm.granted) {
+      alert('需要相机权限以拍摄图片');
+      return;
+    }
     const res = await ImagePicker.launchCameraAsync({
       quality: 0.8,
     });
@@ -96,6 +106,7 @@ export function AddSheet({
           </View>
         </Pressable>
       </Pressable>
+      
     </Modal>
   );
 }

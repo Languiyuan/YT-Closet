@@ -3,7 +3,7 @@ import { Item, Category } from '@/src/types';
 import { ThemedSafeAreaView } from '@/components/themed-safe-area-view';
 import { ThemedText } from '@/components/themed-text';
 import { Colors } from '@/constants/theme';
-import { Image, Pressable, StyleSheet, View, Modal, ScrollView, TextInput, Switch, FlatList, Platform } from 'react-native';
+import { Image, Pressable, StyleSheet, View, Modal, ScrollView, TextInput, Switch, FlatList, Platform, Alert } from 'react-native';
 import { useState, useMemo } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -22,7 +22,7 @@ export default function AddItemScreen() {
   const router = useRouter();
 
   // Form State
-  const [imageUri, setImageUri] = useState<string | undefined>(params.imageUri as string | undefined);
+  const [selectedUris, setSelectedUris] = useState<string[]>(params.imageUri ? [params.imageUri as string] : []);
   const [catL1Id, setCatL1Id] = useState<string | undefined>(undefined);
   const [catL2Id, setCatL2Id] = useState<string | undefined>(undefined);
   const [seasonTags, setSeasonTags] = useState<string[]>([]);
@@ -59,7 +59,11 @@ export default function AddItemScreen() {
     const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.8 });
     if (!res.canceled && res.assets?.[0]?.uri) {
       const saved = await saveImageFromUri(res.assets[0].uri);
-      setImageUri(saved);
+      if (selectedUris.length >= 12) {
+        Alert.alert('最多选择12张');
+        return;
+      }
+      setSelectedUris(prev => [...prev, saved]);
     }
   };
   const takePhoto = async () => {
@@ -68,7 +72,11 @@ export default function AddItemScreen() {
     const res = await ImagePicker.launchCameraAsync({ quality: 0.8 });
     if (!res.canceled && res.assets?.[0]?.uri) {
       const saved = await saveImageFromUri(res.assets[0].uri);
-      setImageUri(saved);
+      if (selectedUris.length >= 12) {
+        Alert.alert('最多选择12张');
+        return;
+      }
+      setSelectedUris(prev => [...prev, saved]);
     }
   };
   const handleEditImage = () => {
@@ -89,24 +97,26 @@ export default function AddItemScreen() {
       return t ? t.id : null;
     }).filter(x => x) as string[];
 
-    const item: Item = {
-      id: uid(),
-      roleId,
-      imageUri,
-      categoryL1Id: catL1Id,
-      categoryL2Id: catL2Id,
-      color,
-      size,
-      material,
-      storageLocation: location,
-      purchaseDate,
-      usageFrequency,
-      palette: palette as any,
-      tagIds: seasonTagIds,
-      createdAt: now,
-      updatedAt: now,
-    };
-    await saveItem(item);
+    for (const uri of selectedUris) {
+      const item: Item = {
+        id: uid(),
+        roleId,
+        imageUri: uri,
+        categoryL1Id: catL1Id,
+        categoryL2Id: catL2Id,
+        color,
+        size,
+        material,
+        storageLocation: location,
+        purchaseDate,
+        usageFrequency,
+        palette: palette as any,
+        tagIds: seasonTagIds,
+        createdAt: now,
+        updatedAt: now,
+      };
+      await saveItem(item);
+    }
     router.replace('/(tabs)/closet');
   };
 
@@ -130,14 +140,18 @@ export default function AddItemScreen() {
     <ThemedSafeAreaView style={styles.container}>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 40 }}>
         {/* Image Section */}
-        <View style={styles.imageContainer}>
-          {imageUri ? (
-            <Image source={{ uri: imageUri }} style={styles.image} />
-          ) : (
-            <View style={[styles.image, styles.placeholder]} />
-          )}
+        <View style={styles.imageGrid}>
+          {selectedUris.length === 0 && <View style={[styles.gridThumb, styles.placeholder]} />}
+          {selectedUris.map(uri => (
+            <View key={uri} style={styles.gridThumb}>
+              <Image source={{ uri }} style={styles.gridImage} />
+              <Pressable style={styles.gridRemove} onPress={() => setSelectedUris(prev => prev.filter(u => u !== uri))}>
+                <IconSymbol name="xmark.circle.fill" size={18} color="#FFF" />
+              </Pressable>
+            </View>
+          ))}
           <Pressable style={styles.editButton} onPress={handleEditImage}>
-            <IconSymbol name="pencil" size={20} color="#FFF" />
+            <IconSymbol name="plus" size={20} color="#FFF" />
           </Pressable>
         </View>
 
@@ -378,6 +392,10 @@ const styles = StyleSheet.create({
   image: { width: '100%', height: '100%' },
   placeholder: { backgroundColor: '#E0E0E0' },
   editButton: { position: 'absolute', right: 16, bottom: 16, backgroundColor: 'rgba(0,0,0,0.5)', width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  imageGrid: { width: '100%', backgroundColor: '#FFF', padding: 8, flexDirection: 'row', flexWrap: 'wrap', gap: 8, minHeight: 200, position: 'relative' },
+  gridThumb: { width: '30%', aspectRatio: 1, backgroundColor: '#F0F0F0', borderRadius: 8, overflow: 'hidden', position: 'relative' },
+  gridImage: { width: '100%', height: '100%' },
+  gridRemove: { position: 'absolute', top: 6, right: 6, backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: 12, padding: 2 },
   form: { marginTop: 20, backgroundColor: '#FFF', paddingHorizontal: 16 },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 16, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#EEE' },
   label: { fontSize: 16, color: '#333' },
