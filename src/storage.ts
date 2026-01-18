@@ -1,6 +1,7 @@
 import * as FileSystem from 'expo-file-system/legacy';
 import { Platform } from 'react-native';
-import { StoreSnapshot, Role, Item, Outfit, Dictionary, Category, Tag } from './types';
+import { generateThumbnail } from './image-utils';
+import { Category, Dictionary, Item, Outfit, Role, StoreSnapshot, Tag } from './types';
 
 const DATA_DIR = `${FileSystem.documentDirectory}data`;
 const IMAGES_DIR = `${FileSystem.documentDirectory}images`;
@@ -139,6 +140,15 @@ export async function saveImageFromUri(sourceUri: string) {
   const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
   const dest = `${IMAGES_DIR}/${filename}`;
   await FileSystem.copyAsync({ from: sourceUri, to: dest });
+  
+  // 同时生成缩略图
+  try {
+    await generateThumbnail(dest, 400, 0.8);
+  } catch (error) {
+    console.error('生成缩略图失败:', error);
+    // 缩略图生成失败不影响原图保存
+  }
+  
   return dest;
 }
 

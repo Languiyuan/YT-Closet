@@ -1,15 +1,18 @@
 import { AddSheet } from '@/components/add-sheet';
 import { FAB } from '@/components/fab';
 import { ImageViewer } from '@/components/image-viewer';
+import { OptimizedImage } from '@/components/optimized-image';
 import { ThemedSafeAreaView } from '@/components/themed-safe-area-view';
 import { ThemedText } from '@/components/themed-text';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
+import { ensureThumbnail, getThumbnailUri } from '@/src/image-utils';
 import { useStore } from '@/src/store-context';
 import { Item } from '@/src/types';
+import { FlashList } from '@shopify/flash-list';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
-import { Dimensions, FlatList, Image, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Dimensions, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 const { width } = Dimensions.get('window');
 const COLUMN_GAP = 12;
@@ -115,6 +118,53 @@ export default function ClosetScreen() {
 
   const items = applyFilters(store.items.filter(i => i.roleId === roleId));
   
+  // 后台自动修复缺失的缩略图
+  useEffect(() => {
+    if (items.length > 0) {
+      items.forEach(async (item) => {
+        if (item.imageUri) {
+          await ensureThumbnail(item.imageUri);
+        }
+      });
+    }
+  }, [items.length]);
+
+  // FlashList 需要的 renderItem
+  const renderItem = useCallback(({ item }: { item: Item }) => {
+    const thumbnailUri = item.imageUri ? getThumbnailUri(item.imageUri) : undefined;
+    
+    return (
+      <View style={[styles.cardContainer, { width: CARD_WIDTH }]}>
+        <View style={styles.card}>
+          {item.imageUri ? (
+            <Pressable 
+              onPress={() => openViewer(item)} 
+              onLongPress={() => router.push({ pathname: '/edit-item/[id]', params: { id: item.id } })}
+            >
+              <OptimizedImage
+                uri={thumbnailUri}
+                originalUri={item.imageUri}
+                style={styles.thumb}
+                contentFit="cover"
+                borderRadius={16}
+                lazy={true}
+                showLoader={true}
+              />
+            </Pressable>
+          ) : (
+            <View style={[styles.thumb, styles.placeholder]} />
+          )}
+          {/* Frequency Badge */}
+          {item.usageFrequency && getFrequencyColor(item.usageFrequency) && (
+            <View style={[styles.badge, { backgroundColor: getFrequencyColor(item.usageFrequency)! }]}>
+              <ThemedText style={styles.badgeText}>{item.usageFrequency}</ThemedText>
+            </View>
+          )}
+        </View>
+      </View>
+    );
+  }, [router]);
+  
   // Images for viewer (only those with URIs)
   const viewerImages = items.filter(i => i.imageUri).map(i => ({ uri: i.imageUri! }));
   
@@ -182,29 +232,12 @@ export default function ClosetScreen() {
           </View>
         </>
       )}
-      <FlatList
+      <FlashList
         data={items}
-        keyExtractor={i => i.id}
+        renderItem={renderItem}
+        keyExtractor={(i) => i.id}
         numColumns={2}
-        columnWrapperStyle={{ gap: COLUMN_GAP }}
-        contentContainerStyle={{ gap: 12, paddingBottom: 80, flexGrow: 1 }}
-        renderItem={({ item }) => (
-          <View style={[styles.card, { width: CARD_WIDTH }]}>
-            {item.imageUri ? (
-              <Pressable onPress={() => openViewer(item)} onLongPress={() => router.push({ pathname: '/edit-item/[id]', params: { id: item.id } })}>
-                <Image source={{ uri: item.imageUri }} style={styles.thumb} />
-              </Pressable>
-            ) : (
-              <View style={[styles.thumb, styles.placeholder]} />
-            )}
-            {/* Frequency Badge */}
-            {item.usageFrequency && getFrequencyColor(item.usageFrequency) && (
-              <View style={[styles.badge, { backgroundColor: getFrequencyColor(item.usageFrequency)! }]}>
-                <ThemedText style={styles.badgeText}>{item.usageFrequency}</ThemedText>
-              </View>
-            )}
-          </View>
-        )}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 80, paddingTop: 8 }}
         ListEmptyComponent={
             <View style={styles.emptyContainer}>
                 <IconSymbol name="tray.fill" size={48} color="#E0E0E0" />
@@ -341,8 +374,11 @@ export default function ClosetScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, gap: 12, backgroundColor: Colors.light.background },
-  tabsContainer: { flexDirection: 'row', gap: 8, paddingRight: 16, paddingVertical: 8 },
+  container: { flex: 1, backgroundColor: Colors.light.background },
+  tabsContainer: { flexDirection: 'row', gap: 8, paddingRight: 16, paddingVertical: 8, paddingLeft: 16 },
+  cardContainer: {
+    padding: 6, // 增加四周间距，形成行间距和列间距
+  },
   tab: { 
       backgroundColor: '#FFF', 
       borderRadius: 20, 
@@ -367,6 +403,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF',
     paddingHorizontal: 16,
     paddingVertical: 8,
+    marginRight: 8,
     borderRadius: 20,
     flexDirection: 'row',
     alignItems: 'center',
@@ -375,7 +412,6 @@ const styles = StyleSheet.create({
     borderColor: Colors.light.tint,
   },
   filterButtonText: { color: Colors.light.tint, fontWeight: '600' },
-
   card: {
     backgroundColor: '#FFF',
     borderRadius: 16,

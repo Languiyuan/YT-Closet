@@ -1,15 +1,18 @@
 import { AddSheet } from '@/components/add-sheet';
 import { FAB } from '@/components/fab';
 import { ImageViewer } from '@/components/image-viewer';
+import { OptimizedImage } from '@/components/optimized-image';
 import { ThemedSafeAreaView } from '@/components/themed-safe-area-view';
 import { ThemedText } from '@/components/themed-text';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
+import { ensureThumbnail, getThumbnailUri } from '@/src/image-utils';
 import { useStore } from '@/src/store-context';
 import { Outfit } from '@/src/types';
+import { FlashList } from '@shopify/flash-list';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { Dimensions, FlatList, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { Dimensions, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 const { width } = Dimensions.get('window');
 const COLUMN_GAP = 12;
@@ -39,6 +42,17 @@ export default function OutfitsScreen() {
     ? outfits 
     : outfits.filter(o => o.season?.includes(activeSeason));
 
+  // 后台自动修复缺失的缩略图
+  useEffect(() => {
+    if (filteredOutfits.length > 0) {
+      filteredOutfits.forEach(async (outfit) => {
+        if (outfit.previewUri) {
+          await ensureThumbnail(outfit.previewUri);
+        }
+      });
+    }
+  }, [filteredOutfits.length]);
+
   const viewerImages = filteredOutfits.filter(o => o.previewUri).map(o => ({ uri: o.previewUri! }));
 
   const openViewer = (outfit: Outfit) => {
@@ -49,6 +63,36 @@ export default function OutfitsScreen() {
         setIsViewerVisible(true);
     }
   };
+
+  // FlashList renderItem
+  const renderItem = useCallback(({ item }: { item: Outfit }) => {
+    const thumbnailUri = item.previewUri ? getThumbnailUri(item.previewUri) : undefined;
+    
+    return (
+      <View style={[styles.cardContainer, { width: CARD_WIDTH }]}>
+        <View style={styles.card}>
+          {item.previewUri ? (
+            <Pressable 
+              onPress={() => openViewer(item)} 
+              onLongPress={() => router.push({ pathname: '/edit-outfit/[id]', params: { id: item.id } })}
+            >
+              <OptimizedImage
+                uri={thumbnailUri}
+                originalUri={item.previewUri}
+                style={styles.thumb}
+                contentFit="cover"
+                borderRadius={16}
+                lazy={true}
+                showLoader={true}
+              />
+            </Pressable>
+          ) : (
+            <View style={[styles.thumb, styles.placeholder]} />
+          )}
+        </View>
+      </View>
+    );
+  }, [router]);
 
   return (
     <ThemedSafeAreaView style={styles.container}>
@@ -68,23 +112,12 @@ export default function OutfitsScreen() {
         </View>
       )}
 
-      <FlatList
+      <FlashList
         data={filteredOutfits}
-        keyExtractor={o => o.id}
+        renderItem={renderItem}
+        keyExtractor={(o) => o.id}
         numColumns={2}
-        columnWrapperStyle={{ gap: COLUMN_GAP }}
-        contentContainerStyle={{ gap: 12, paddingBottom: 80, flexGrow: 1 }}
-        renderItem={({ item }) => (
-          <View style={[styles.card, { width: CARD_WIDTH }]}>
-            {item.previewUri ? (
-              <Pressable onPress={() => openViewer(item)} onLongPress={() => router.push({ pathname: '/edit-outfit/[id]', params: { id: item.id } })}>
-                <Image source={{ uri: item.previewUri }} style={styles.thumb} />
-              </Pressable>
-            ) : (
-              <View style={[styles.thumb, styles.placeholder]} />
-            )}
-          </View>
-        )}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 80, paddingTop: 8 }}
         ListEmptyComponent={
             <View style={styles.emptyContainer}>
                 <IconSymbol name="person.2.fill" size={48} color="#E0E0E0" />
@@ -117,8 +150,11 @@ export default function OutfitsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, gap: 12, backgroundColor: Colors.light.background },
-  tabsContainer: { flexDirection: 'row', gap: 8, paddingRight: 16, paddingVertical: 8 },
+  container: { flex: 1, backgroundColor: Colors.light.background },
+  tabsContainer: { flexDirection: 'row', gap: 8, paddingRight: 16, paddingVertical: 8, paddingLeft: 16 },
+  cardContainer: {
+    padding: 6, // 增加四周间距，形成行间距和列间距
+  },
   tab: { 
       backgroundColor: '#FFF', 
       borderRadius: 20, 

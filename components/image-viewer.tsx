@@ -1,10 +1,9 @@
-import React from 'react';
-import { StyleSheet, Modal, View, Pressable, Dimensions } from 'react-native';
-import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, runOnJS } from 'react-native-reanimated';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
 import { Image } from 'expo-image';
+import React from 'react';
+import { Dimensions, Modal, Pressable, StyleSheet, View } from 'react-native';
+import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
+import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 const { width, height } = Dimensions.get('window');
 
@@ -113,11 +112,15 @@ export function ImageViewer({ visible, imageUri, onClose }: ImageViewerProps) {
         <GestureDetector gesture={Gesture.Race(doubleTap, Gesture.Simultaneous(pinch, pan))}>
           <View style={styles.imageContainer}>
              {imageUri && (
-                 <Animated.Image
-                    source={{ uri: imageUri }}
-                    style={[styles.image, animatedStyle]}
-                    resizeMode="contain"
-                 />
+                 <Animated.View style={[StyleSheet.absoluteFill, animatedStyle]}>
+                   <Image
+                      source={{ uri: imageUri }}
+                      style={styles.image}
+                      contentFit="contain"
+                      cachePolicy="memory-disk"
+                      priority="high"
+                   />
+                 </Animated.View>
              )}
           </View>
         </GestureDetector>
