@@ -1,15 +1,15 @@
-import { useStore } from '@/src/store-context';
+import { AddSheet } from '@/components/add-sheet';
+import { FAB } from '@/components/fab';
 import { ThemedSafeAreaView } from '@/components/themed-safe-area-view';
 import { ThemedText } from '@/components/themed-text';
-import { Colors } from '@/constants/theme';
-import { StyleSheet, View, Pressable, Modal, TextInput, Image, Dimensions, ScrollView, Alert, Platform } from 'react-native';
-import { useMemo, useState } from 'react';
-import { FAB } from '@/components/fab';
-import { AddSheet } from '@/components/add-sheet';
-import { useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { Colors } from '@/constants/theme';
 import { SEASONS } from '@/src/constants';
 import { saveImagesFromUris } from '@/src/storage';
+import { useStore } from '@/src/store-context';
+import { useRouter } from 'expo-router';
+import { useMemo, useState } from 'react';
+import { Alert, Dimensions, Image, Modal, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 
 function uid() {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
@@ -28,7 +28,7 @@ const SLOGANS = [
 ];
 
 export default function StatsScreen() {
-  const { store, saveRole, setRole, deleteRole } = useStore();
+  const { store, saveRole, setRole, deleteRole, saveItem, saveOutfit } = useStore();
   const router = useRouter();
   const roleId = store.currentRoleId;
   const items = store.items.filter(i => i.roleId === roleId);
@@ -341,11 +341,11 @@ export default function StatsScreen() {
       <AddSheet
         visible={addOpen}
         onClose={() => setAddOpen(false)}
-        onPicked={(type, uri) => {
+        onPicked={(type, uris) => {
           if (type === 'item') {
-            router.push({ pathname: '/add-item', params: { imageUri: uri } });
+            router.push({ pathname: '/add-item', params: { imageUris: JSON.stringify(uris) } });
           } else {
-            router.push({ pathname: '/add-outfit', params: { imageUri: uri } });
+            router.push({ pathname: '/add-outfit', params: { imageUris: JSON.stringify(uris) } });
           }
         }}
       />

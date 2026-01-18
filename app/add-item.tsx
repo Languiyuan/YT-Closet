@@ -1,15 +1,15 @@
-import { useStore } from '@/src/store-context';
-import { Item, Category } from '@/src/types';
+import { pickMultipleImages, takePhoto as takeCameraPhoto } from '@/components/multi-image-picker';
 import { ThemedSafeAreaView } from '@/components/themed-safe-area-view';
 import { ThemedText } from '@/components/themed-text';
-import { Colors } from '@/constants/theme';
-import { Image, Pressable, StyleSheet, View, Modal, ScrollView, TextInput, Switch, FlatList, Platform, Alert } from 'react-native';
-import { useState, useMemo } from 'react';
-import * as ImagePicker from 'expo-image-picker';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { saveImageFromUri } from '@/src/storage';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { SEASONS, SIZES_CLOTHING, SIZES_SHOE, MATERIALS, COLORS, PALETTES } from '@/src/constants';
+import { Colors } from '@/constants/theme';
+import { COLORS, MATERIALS, PALETTES, SEASONS, SIZES_CLOTHING, SIZES_SHOE } from '@/src/constants';
+import { saveImageFromUri, saveImagesFromUris } from '@/src/storage';
+import { useStore } from '@/src/store-context';
+import { Item } from '@/src/types';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useMemo, useState } from 'react';
+import { Alert, Image, Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 
 function uid() {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
@@ -18,11 +18,26 @@ function uid() {
 export default function AddItemScreen() {
   const { store, saveItem } = useStore();
   const roleId = store.currentRoleId;
-  const params = useLocalSearchParams<{ imageUri?: string }>();
+  const params = useLocalSearchParams<{ imageUri?: string; imageUris?: string }>();
   const router = useRouter();
 
+  // 处理初始图片：支持单图imageUri和多图imageUris
+  const initialUris = useMemo(() => {
+    if (params.imageUris) {
+      try {
+        return JSON.parse(params.imageUris as string) as string[];
+      } catch {
+        return [];
+      }
+    }
+    if (params.imageUri) {
+      return [params.imageUri as string];
+    }
+    return [];
+  }, [params.imageUri, params.imageUris]);
+
   // Form State
-  const [selectedUris, setSelectedUris] = useState<string[]>(params.imageUri ? [params.imageUri as string] : []);
+  const [selectedUris, setSelectedUris] = useState<string[]>(initialUris);
   const [catL1Id, setCatL1Id] = useState<string | undefined>(undefined);
   const [catL2Id, setCatL2Id] = useState<string | undefined>(undefined);
   const [seasonTags, setSeasonTags] = useState<string[]>([]);
@@ -54,28 +69,30 @@ export default function AddItemScreen() {
 
   // Image Handling
   const chooseLibrary = async () => {
-    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) return;
-    const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.8 });
-    if (!res.canceled && res.assets?.[0]?.uri) {
-      const saved = await saveImageFromUri(res.assets[0].uri);
-      if (selectedUris.length >= 12) {
-        Alert.alert('最多选择12张');
-        return;
-      }
-      setSelectedUris(prev => [...prev, saved]);
+    // 检查是否已达到最大数量
+    if (selectedUris.length >= 12) {
+      Alert.alert('已达上限', '最多选择12张图片');
+      return;
+    }
+    
+    const remainingSlots = 12 - selectedUris.length;
+    const uris = await pickMultipleImages({ maxSelection: remainingSlots, quality: 0.8 });
+    
+    if (uris.length > 0) {
+      const savedUris = await saveImagesFromUris(uris);
+      setSelectedUris(prev => [...prev, ...savedUris]);
     }
   };
+  
   const takePhoto = async () => {
-    const perm = await ImagePicker.requestCameraPermissionsAsync();
-    if (!perm.granted) return;
-    const res = await ImagePicker.launchCameraAsync({ quality: 0.8 });
-    if (!res.canceled && res.assets?.[0]?.uri) {
-      const saved = await saveImageFromUri(res.assets[0].uri);
-      if (selectedUris.length >= 12) {
-        Alert.alert('最多选择12张');
-        return;
-      }
+    if (selectedUris.length >= 12) {
+      Alert.alert('已达上限', '最多选择12张图片');
+      return;
+    }
+    
+    const uri = await takeCameraPhoto(0.8);
+    if (uri) {
+      const saved = await saveImageFromUri(uri);
       setSelectedUris(prev => [...prev, saved]);
     }
   };
@@ -125,7 +142,7 @@ export default function AddItemScreen() {
     <Pressable style={styles.row} onPress={onPress}>
       <ThemedText style={styles.label}>{label}</ThemedText>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, flex: 1, justifyContent: 'flex-end' }}>
-        <ThemedText style={[styles.value, !value && styles.placeholder]} numberOfLines={1}>
+        <ThemedText style={[styles.value, !value && styles.placeholderText]} numberOfLines={1}>
           {value || '请选择'}
         </ThemedText>
         <IconSymbol name="chevron.right" size={20} color="#C7C7CC" />
@@ -391,6 +408,7 @@ const styles = StyleSheet.create({
   imageContainer: { width: '100%', aspectRatio: 1, backgroundColor: '#FFF' },
   image: { width: '100%', height: '100%' },
   placeholder: { backgroundColor: '#E0E0E0' },
+  placeholderText: { color: '#999' },
   editButton: { position: 'absolute', right: 16, bottom: 16, backgroundColor: 'rgba(0,0,0,0.5)', width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   imageGrid: { width: '100%', backgroundColor: '#FFF', padding: 8, flexDirection: 'row', flexWrap: 'wrap', gap: 8, minHeight: 200, position: 'relative' },
   gridThumb: { width: '30%', aspectRatio: 1, backgroundColor: '#F0F0F0', borderRadius: 8, overflow: 'hidden', position: 'relative' },
@@ -400,7 +418,6 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 16, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#EEE' },
   label: { fontSize: 16, color: '#333' },
   value: { fontSize: 16, color: '#333', textAlign: 'right' },
-  placeholder: { color: '#999' },
   saveButton: { margin: 24, backgroundColor: Colors.light.tint, paddingVertical: 14, borderRadius: 12, alignItems: 'center' },
   saveButtonText: { color: '#FFF', fontSize: 16, fontWeight: '600' },
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },

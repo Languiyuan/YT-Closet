@@ -1,15 +1,15 @@
-import { useStore } from '@/src/store-context';
-import { Outfit } from '@/src/types';
 import { ThemedSafeAreaView } from '@/components/themed-safe-area-view';
 import { ThemedText } from '@/components/themed-text';
+import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
-import { Image, Pressable, StyleSheet, View, Modal, ScrollView } from 'react-native';
-import { useState } from 'react';
+import { SEASONS } from '@/src/constants';
+import { saveImageFromUri } from '@/src/storage';
+import { useStore } from '@/src/store-context';
+import { Outfit } from '@/src/types';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { saveImageFromUri } from '@/src/storage';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { SEASONS } from '@/src/constants';
+import { useState } from 'react';
+import { Image, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 export default function EditOutfitScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -83,7 +83,7 @@ export default function EditOutfitScreen() {
     <Pressable style={styles.row} onPress={onPress}>
       <ThemedText style={styles.label}>{label}</ThemedText>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, flex: 1, justifyContent: 'flex-end' }}>
-        <ThemedText style={[styles.value, !value && styles.placeholder]} numberOfLines={1}>
+        <ThemedText style={[styles.value, !value && styles.placeholderText]} numberOfLines={1}>
           {value || '请选择'}
         </ThemedText>
         <IconSymbol name="chevron.right" size={20} color="#C7C7CC" />
@@ -181,12 +181,12 @@ const styles = StyleSheet.create({
   imageContainer: { width: '100%', aspectRatio: 1, backgroundColor: '#FFF' },
   image: { width: '100%', height: '100%' },
   placeholder: { backgroundColor: '#E0E0E0' },
+  placeholderText: { color: '#999' },
   editButton: { position: 'absolute', right: 16, bottom: 16, backgroundColor: 'rgba(0,0,0,0.5)', width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   form: { marginTop: 20, backgroundColor: '#FFF', paddingHorizontal: 16 },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 16, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#EEE' },
   label: { fontSize: 16, color: '#333' },
   value: { fontSize: 16, color: '#333', textAlign: 'right' },
-  placeholder: { color: '#999' },
   saveButton: { margin: 24, backgroundColor: Colors.light.tint, paddingVertical: 14, borderRadius: 12, alignItems: 'center' },
   saveButtonText: { color: '#FFF', fontSize: 16, fontWeight: '600' },
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },

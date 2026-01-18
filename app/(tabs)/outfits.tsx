@@ -1,16 +1,15 @@
-import { useStore } from '@/src/store-context';
-import { Outfit } from '@/src/types';
+import { AddSheet } from '@/components/add-sheet';
+import { FAB } from '@/components/fab';
+import { ImageViewer } from '@/components/image-viewer';
 import { ThemedSafeAreaView } from '@/components/themed-safe-area-view';
 import { ThemedText } from '@/components/themed-text';
-import { Colors } from '@/constants/theme';
-import { FlatList, Image, Pressable, StyleSheet, View, Dimensions, ScrollView, Alert } from 'react-native';
-import { useState, useEffect } from 'react';
-import { FAB } from '@/components/fab';
-import { AddSheet } from '@/components/add-sheet';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import { ImageViewer } from '@/components/image-viewer';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { saveImagesFromUris } from '@/src/storage';
+import { Colors } from '@/constants/theme';
+import { useStore } from '@/src/store-context';
+import { Outfit } from '@/src/types';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Dimensions, FlatList, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 const { width } = Dimensions.get('window');
 const COLUMN_GAP = 12;
@@ -105,11 +104,11 @@ export default function OutfitsScreen() {
       <AddSheet
         visible={addOpen}
         onClose={() => setAddOpen(false)}
-        onPicked={(type, uri) => {
+        onPicked={(type, uris) => {
           if (type === 'item') {
-            router.push({ pathname: '/add-item', params: { imageUri: uri } });
+            router.push({ pathname: '/add-item', params: { imageUris: JSON.stringify(uris) } });
           } else {
-            router.push({ pathname: '/add-outfit', params: { imageUri: uri } });
+            router.push({ pathname: '/add-outfit', params: { imageUris: JSON.stringify(uris) } });
           }
         }}
       />

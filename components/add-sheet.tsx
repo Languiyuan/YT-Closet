@@ -1,21 +1,19 @@
-import { Modal, Pressable, StyleSheet, View } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
+import { pickMultipleImages, takePhoto } from '@/components/multi-image-picker';
 import { ThemedText } from '@/components/themed-text';
-import { Colors } from '@/constants/theme';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { useState, useEffect } from 'react';
+import { Colors } from '@/constants/theme';
+import { useEffect, useState } from 'react';
+import { Modal, Pressable, StyleSheet, View } from 'react-native';
  
 
 export function AddSheet({
   visible,
   onClose,
   onPicked,
-  
 }: {
   visible: boolean;
   onClose: () => void;
-  onPicked: (type: 'item' | 'outfit', uri: string) => void;
-  
+  onPicked: (type: 'item' | 'outfit', uris: string[]) => void;
 }) {
   const [step, setStep] = useState<'type' | 'source'>('type');
   const [selectedType, setSelectedType] = useState<'item' | 'outfit'>('item');
@@ -29,31 +27,17 @@ export function AddSheet({
   }, [visible]);
 
   const chooseLibrary = async () => {
-    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) {
-      alert('需要相册权限以选择图片');
-      return;
-    }
-    const res = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.8,
-    });
-    if (!res.canceled && res.assets?.[0]?.uri) {
-      onPicked(selectedType, res.assets[0].uri);
+    const uris = await pickMultipleImages({ maxSelection: 12, quality: 0.8 });
+    if (uris.length > 0) {
+      onPicked(selectedType, uris);
       onClose();
     }
   };
-  const takePhoto = async () => {
-    const perm = await ImagePicker.requestCameraPermissionsAsync();
-    if (!perm.granted) {
-      alert('需要相机权限以拍摄图片');
-      return;
-    }
-    const res = await ImagePicker.launchCameraAsync({
-      quality: 0.8,
-    });
-    if (!res.canceled && res.assets?.[0]?.uri) {
-      onPicked(selectedType, res.assets[0].uri);
+  
+  const handleTakePhoto = async () => {
+    const uri = await takePhoto(0.8);
+    if (uri) {
+      onPicked(selectedType, [uri]);
       onClose();
     }
   };
@@ -94,11 +78,11 @@ export function AddSheet({
                   </Pressable>
                 </>
             ) : (
-                <>
+                <>  
                   <Pressable style={styles.button} onPress={chooseLibrary}>
                       <ThemedText style={styles.buttonText}>从相册选择</ThemedText>
                   </Pressable>
-                  <Pressable style={[styles.button, styles.secondaryButton]} onPress={takePhoto}>
+                  <Pressable style={[styles.button, styles.secondaryButton]} onPress={handleTakePhoto}>
                       <ThemedText style={styles.secondaryButtonText}>拍照</ThemedText>
                   </Pressable>
                 </>

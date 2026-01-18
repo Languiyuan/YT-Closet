@@ -1,17 +1,15 @@
-import { useStore } from '@/src/store-context';
-import { Item } from '@/src/types';
+import { AddSheet } from '@/components/add-sheet';
+import { FAB } from '@/components/fab';
+import { ImageViewer } from '@/components/image-viewer';
 import { ThemedSafeAreaView } from '@/components/themed-safe-area-view';
 import { ThemedText } from '@/components/themed-text';
-import { Colors } from '@/constants/theme';
-import { FlatList, Image, Pressable, StyleSheet, View, ScrollView, Dimensions, Alert } from 'react-native';
-import { useState, useMemo, useEffect } from 'react';
-import { Modal } from 'react-native';
-import { FAB } from '@/components/fab';
-import { AddSheet } from '@/components/add-sheet';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import { ImageViewer } from '@/components/image-viewer';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { saveImagesFromUris } from '@/src/storage';
+import { Colors } from '@/constants/theme';
+import { useStore } from '@/src/store-context';
+import { Item } from '@/src/types';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useMemo, useState } from 'react';
+import { Dimensions, FlatList, Image, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 const { width } = Dimensions.get('window');
 const COLUMN_GAP = 12;
@@ -200,8 +198,8 @@ export default function ClosetScreen() {
               <View style={[styles.thumb, styles.placeholder]} />
             )}
             {/* Frequency Badge */}
-            {item.usageFrequency && (
-              <View style={[styles.badge, { backgroundColor: getFrequencyColor(item.usageFrequency) }]}>
+            {item.usageFrequency && getFrequencyColor(item.usageFrequency) && (
+              <View style={[styles.badge, { backgroundColor: getFrequencyColor(item.usageFrequency)! }]}>
                 <ThemedText style={styles.badgeText}>{item.usageFrequency}</ThemedText>
               </View>
             )}
@@ -329,11 +327,12 @@ export default function ClosetScreen() {
       <AddSheet
         visible={addOpen}
         onClose={() => setAddOpen(false)}
-        onPicked={(type, uri) => {
+        onPicked={(type, uris) => {
           if (type === 'item') {
-            router.push({ pathname: '/add-item', params: { imageUri: uri } });
+            // 多图模式：传递所有URI的JSON
+            router.push({ pathname: '/add-item', params: { imageUris: JSON.stringify(uris) } });
           } else {
-            router.push({ pathname: '/add-outfit', params: { imageUri: uri } });
+            router.push({ pathname: '/add-outfit', params: { imageUris: JSON.stringify(uris) } });
           }
         }}
       />
